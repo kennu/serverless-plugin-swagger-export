@@ -91,7 +91,7 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
       };
 
       // Copy swaggerExport fields from s-project.json if present
-      Object.keys(this.S.state.project.swaggerExport).map((key) => {
+      Object.keys(this.S.state.project.swaggerExport || {}).map((key) => {
         // Deep-copy info so subfields can be overridden individually
         if (key === 'info') {
           var subObject = this.S.state.project.swaggerExport[key];
@@ -137,7 +137,10 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
     }
 
     _addSwaggerEndpoint(swagger, component, sfunction, endpoint) {
-      var url = '/' + endpoint.path;
+      var url = endpoint.path;
+      if (url.slice(0, 1) !== '/') {
+        url = '/' + url;
+      }
       var method = endpoint.method.toLowerCase();
       if (!swagger.paths[url]) swagger.paths[url] = {};
       var swaggerExport = endpoint.swaggerExport || {};
