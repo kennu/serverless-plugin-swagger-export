@@ -1,0 +1,30 @@
+{
+  "name": "serverless-plugin-swagger-export",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=4.0"
+  },
+  "description": "Swagger Export plugin for Serveless",
+  "author": "Kenneth Falck <kennu@iki.fi>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kennu/serverless-plugin-swagger-export"
+  },
+  "keywords": [
+    "serverless plugin swagger export",
+    "serverless plugins"
+  ],
+  "main": "index.js",
+  "bin": {},
+  "scripts": {
+    "test": "mocha tests/all"
+  },
+  "devDependencies": {
+    "chai": "^3.2.0",
+    "mocha": "^2.2.5"
+  },
+  "dependencies": {
+    "bluebird": "^3.0.6"
+  }
+}
