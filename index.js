@@ -110,6 +110,14 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
       .then(() => {
         // Final cleanups
         delete swagger.definitions.$sequelizeImport;
+        // Sort by URL path
+        var paths = swagger.paths;
+        var sortedPaths = Object.keys(swagger.paths);
+        swagger.paths = {};
+        sortedPaths.sort();
+        sortedPaths.map(function (path) {
+          swagger.paths[path] = paths[path];
+        });
         // Output the final JSON
         console.log(JSON.stringify(swagger, null, 2));
       });
