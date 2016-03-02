@@ -282,6 +282,10 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
           description: attribute.comment
         };
       });
+      // Check if model has defined a swaggerExport function
+      if (typeof model.swaggerExport == 'function') {
+        model.swaggerExport(def);
+      }
       swagger.definitions[objectName] = def;
       return BbPromise.resolve();
     }
