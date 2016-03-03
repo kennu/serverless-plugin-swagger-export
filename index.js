@@ -152,6 +152,14 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
       var method = endpoint.method.toLowerCase();
       if (!swagger.paths[url]) swagger.paths[url] = {};
       var swaggerExport = endpoint.swaggerExport || {};
+
+      // Check if endpoint is marked to be excluded
+      if (swaggerExport.exclude) {
+        // Yes, skip this one.
+        return BbPromise.resolve();
+      }
+      delete swaggerExport.exclude;
+
       var def = {
         "tags": [],
         "summary": "",
