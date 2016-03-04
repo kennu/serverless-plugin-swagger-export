@@ -17,9 +17,9 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
       swaggerTypes = {
         'string': 'string',
         'text': 'string',
-        'integer': 'integer',
-        'date': 'dateTime',
-        'decimal': 'double'
+        'integer': 'number',
+        'date': 'string',
+        'decimal': 'number'
       };
 
       // Mark all fields as required
@@ -150,7 +150,6 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
         url = '/' + url;
       }
       var method = endpoint.method.toLowerCase();
-      if (!swagger.paths[url]) swagger.paths[url] = {};
       var swaggerExport = endpoint.swaggerExport || {};
 
       // Check if endpoint is marked to be excluded
@@ -159,6 +158,8 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
         return BbPromise.resolve();
       }
       delete swaggerExport.exclude;
+
+      if (!swagger.paths[url]) swagger.paths[url] = {};
 
       var def = {
         "tags": [],
@@ -198,6 +199,7 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
           if (m = requestName.match(/^method\.request\.path\.(.*)/)) {
             paramIn = 'path';
             name = m[1];
+            required = true;
           } else if (m = requestName.match(/^method\.request\.query\.(.*)/)) {
             paramIn = 'query';
             nam = m[1];
