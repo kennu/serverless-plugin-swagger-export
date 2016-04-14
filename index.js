@@ -7,7 +7,7 @@ var path = require('path');
  * Kenneth Falck <kennu@iki.fi> 2016
  */
 
-module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPlugin Class
+module.exports = function(S) {
 
   const path    = require('path'),
       fs        = require('fs'),
@@ -29,15 +29,15 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
    * ServerlessPluginSwaggerExport
    */
 
-  class ServerlessPluginSwaggerExport extends ServerlessPlugin {
+  class ServerlessPluginSwaggerExport extends S.classes.Plugin {
 
     /**
      * Constructor
      * - Keep this and don't touch it unless you know what you're doing.
      */
 
-    constructor(S) {
-      super(S);
+    constructor() {
+      super();
     }
 
     /**
@@ -58,7 +58,7 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
      */
 
     registerActions() {
-      this.S.addAction(this._exportSwaggerJSON.bind(this), {
+      S.addAction(this._exportSwaggerJSON.bind(this), {
         handler:        'exportSwaggerJSON',
         description:    'Exports a Swagger JSON API definition to standard output',
         context:        'swagger',
@@ -77,9 +77,9 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
       var swagger = {
         "swagger": "2.0",
         "info": {
-          "version": this.S.state.project.version,
-          "title": this.S.state.project.title,
-          "description": this.S.state.project.description
+          "version": S.state.project.version,
+          "title": S.state.project.title,
+          "description": S.state.project.description
         },
         "host": "localhost",
         "basePath": "/",
@@ -91,15 +91,15 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
       };
 
       // Copy swaggerExport fields from s-project.json if present
-      Object.keys(this.S.state.project.swaggerExport || {}).map((key) => {
+      Object.keys(S.state.project.swaggerExport || {}).map((key) => {
         // Deep-copy info so subfields can be overridden individually
         if (key === 'info') {
-          var subObject = this.S.state.project.swaggerExport[key];
+          var subObject = S.state.project.swaggerExport[key];
           Object.keys(subObject).map((subkey) => {
             swagger[key][subkey] = subObject[subkey];
           });
         } else {
-          swagger[key] = this.S.state.project.swaggerExport[key];
+          swagger[key] = S.state.project.swaggerExport[key];
         }
       });
       return this._addSwaggerAPIPaths(swagger)
@@ -127,8 +127,8 @@ module.exports = function(ServerlessPlugin) { // Always pass in the ServerlessPl
      * Enumerate all API paths and add them to the Swagger JSON object
      */
     _addSwaggerAPIPaths(swagger) {
-      return BbPromise.map(Object.keys(this.S.state.project.components), (componentName) => {
-        return this._addSwaggerComponent(swagger, this.S.state.project.components[componentName]);
+      return BbPromise.map(Object.keys(S.state.project.components), (componentName) => {
+        return this._addSwaggerComponent(swagger, S.state.project.components[componentName]);
       });
     }
 
