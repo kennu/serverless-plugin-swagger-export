@@ -210,10 +210,34 @@ module.exports = function(S) {
         "description": "",
         "operationId": method + url.replace(/\//g, '-').replace(/[{}]/g, ''),
         "produces": [ "application/json" ],
-        "security": endpoint.apiKeyRequired ? [ { "apiKeyHeader": [] } ] : [],
+        "security": [],
         "parameters": [],
         "responses": {}
       };
+      if (endpoint.apiKeyRequired) {
+        // Add API key to security
+        def.security.push({ "apiKeyHeader": [] });
+        // Add global security definition if it's not already defined in the project
+        if (!swagger.securityDefinitions["apiKeyHeader"]) {
+          swagger.securityDefinitions["apiKeyHeader"] = {
+            "type": "apiKey",
+            "name": "X-API-Key",
+            "in": "header"
+          };
+        }
+      }
+      if (endpoint.authorizationType == 'CUSTOM') {
+        // Add custom authorization to security
+        def.security.push({ "authorizationHeader": [] });
+        // Add Authorization header to security
+        if (!swagger.securityDefinitions["authorizationHeader"]) {
+          swagger.securityDefinitions["authorizationHeader"] = {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+          };
+        }
+      }
       swagger.paths[url][method] = def;
 
       // Override values specified in swaggerExport
@@ -223,15 +247,6 @@ module.exports = function(S) {
       Object.keys(swaggerExt).map((key) => {
         def[key] = swaggerExt[key];
       });
-
-      // Add global security definition if needed
-      if (def.security.length && def.security[0].apiKeyHeader && !swagger.securityDefinitions["apiKeyHeader"]) {
-        swagger.securityDefinitions["apiKeyHeader"] = {
-          "type": "apiKey",
-          "name": "X-API-Key",
-          "in": "header"
-        };
-      }
 
       // Add parameters from s-function endpoint unless already specified in swaggerExport
       if (!def.parameters.length) {
