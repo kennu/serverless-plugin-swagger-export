@@ -91,21 +91,29 @@ module.exports = function(S) {
         "definitions": {}
       };
 
-      // Copy swaggerExport fields from s-project.json if present
-      Object.keys(project.swaggerExport || {}).map((key) => {
-        // Deep-copy info so subfields can be overridden individually
-        if (key === 'info') {
-          var subObject = project.swaggerExport[key];
-          Object.keys(subObject).map((subkey) => {
-            swagger[key][subkey] = subObject[subkey];
-          });
-        } else {
-          swagger[key] = project.swaggerExport[key];
-        }
-      });
-      return this._addSwaggerAPIPaths(project, swagger)
+      return BbPromise.resolve()
       .then(() => {
-        // Generate object type definitions
+        // Add main project info from s-project.json
+        return this._addSwaggerProjectInfo(project.swaggerExport, swagger);
+      })
+      .then(() => {
+        // Add main project info from s-swagger.json (if exists)
+        var content;
+        try {
+          content = fs.readFileSync(path.join(S.config.projectPath, 's-swagger.json'), 'utf-8');
+        } catch (err) {
+          // Ignore file not found
+        }
+        if (content) {
+          return this._addSwaggerProjectInfo(JSON.parse(content), swagger);
+        }
+      })
+      .then(() => {
+        // Add functions and endpoints from s-function.json's
+        return this._addSwaggerFunctions(project.functions, swagger);
+      })
+      .then(() => {
+        // Add object type definitions from models
         return this._addSwaggerObjectDefinitions(swagger);
       })
       .then(() => {
@@ -125,11 +133,27 @@ module.exports = function(S) {
     }
 
     /**
-     * Enumerate all API paths and add them to the Swagger JSON object
+     * Copy swaggerExport fields from s-project.json to Swagger JSON (if present)
      */
-    _addSwaggerAPIPaths(project, swagger) {
-      var functions = project.functions;
-      return BbPromise.map(Object.keys(project.functions), (functionName) => {
+    _addSwaggerProjectInfo(swaggerExport, swagger) {
+      Object.keys(swaggerExport || {}).map((key) => {
+        // Deep-copy info so subfields can be overridden individually
+        if (key === 'info') {
+          var subObject = swaggerExport[key];
+          Object.keys(subObject).map((subkey) => {
+            swagger[key][subkey] = subObject[subkey];
+          });
+        } else {
+          swagger[key] = swaggerExport[key];
+        }
+      });
+    }
+
+    /**
+     * Enumerate all functions and add them to the Swagger JSON object
+     */
+    _addSwaggerFunctions(functions, swagger) {
+      return BbPromise.map(Object.keys(functions), (functionName) => {
         return this._addSwaggerFunction(swagger, functions[functionName]);
       });
     }
@@ -147,13 +171,36 @@ module.exports = function(S) {
       }
       var method = endpoint.method.toLowerCase();
       var swaggerExport = endpoint.swaggerExport || {};
+      var swaggerExt, swaggerExtContent;
+
+      // Try to read additional endpoint specs from s-swagger.json in the same folder as s-function.json
+      try {
+        swaggerExtContent = fs.readFileSync(sfunction.getFilePath().replace(/s-function\.json$/, 's-swagger.json'), 'utf-8');
+      } catch (err) {
+        // Ignore file not found
+        if (err.code != 'ENOENT') {
+          console.error(err);
+        }
+      }
+      if (swaggerExtContent) {
+        swaggerExt = JSON.parse(swaggerExtContent);
+      }
+      if (!swaggerExt) {
+        swaggerExt = {};
+      }
+      // If external s-swagger.json content has "paths" key defined, look up the correct path/method in it.
+      // Otherwise it will match any endpoint defined in the same folder.
+      if (swaggerExt.paths) {
+        swaggerExt = swaggerExt.paths[url][method] || {};
+      }
 
       // Check if endpoint is marked to be excluded
-      if (swaggerExport.exclude) {
+      if (swaggerExport.exclude || swaggerExt.exclude) {
         // Yes, skip this one.
         return BbPromise.resolve();
       }
       delete swaggerExport.exclude;
+      delete swaggerExt.exclude;
 
       if (!swagger.paths[url]) swagger.paths[url] = {};
 
@@ -172,6 +219,9 @@ module.exports = function(S) {
       // Override values specified in swaggerExport
       Object.keys(swaggerExport).map((key) => {
         def[key] = swaggerExport[key];
+      });
+      Object.keys(swaggerExt).map((key) => {
+        def[key] = swaggerExt[key];
       });
 
       // Add global security definition if needed
@@ -196,9 +246,9 @@ module.exports = function(S) {
             paramIn = 'path';
             name = m[1];
             required = true;
-          } else if (m = requestName.match(/^method\.request\.query\.(.*)/)) {
+          } else if (m = requestName.match(/^method\.request\.querystring\.(.*)/)) {
             paramIn = 'query';
-            nam = m[1];
+            name = m[1];
           }
           if (name && paramIn) {
             def.parameters.push({
