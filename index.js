@@ -74,12 +74,13 @@ module.exports = function(S) {
      */
     _exportSwaggerJSON() {
       // This is the base Swagger JSON
+      var project = S.getProject();
       var swagger = {
         "swagger": "2.0",
         "info": {
-          "version": S.state.project.version,
-          "title": S.state.project.title,
-          "description": S.state.project.description
+          "version": project.version,
+          "title": project.title,
+          "description": project.description
         },
         "host": "localhost",
         "basePath": "/",
@@ -91,18 +92,18 @@ module.exports = function(S) {
       };
 
       // Copy swaggerExport fields from s-project.json if present
-      Object.keys(S.state.project.swaggerExport || {}).map((key) => {
+      Object.keys(project.swaggerExport || {}).map((key) => {
         // Deep-copy info so subfields can be overridden individually
         if (key === 'info') {
-          var subObject = S.state.project.swaggerExport[key];
+          var subObject = project.swaggerExport[key];
           Object.keys(subObject).map((subkey) => {
             swagger[key][subkey] = subObject[subkey];
           });
         } else {
-          swagger[key] = S.state.project.swaggerExport[key];
+          swagger[key] = project.swaggerExport[key];
         }
       });
-      return this._addSwaggerAPIPaths(swagger)
+      return this._addSwaggerAPIPaths(project, swagger)
       .then(() => {
         // Generate object type definitions
         return this._addSwaggerObjectDefinitions(swagger);
@@ -126,25 +127,20 @@ module.exports = function(S) {
     /**
      * Enumerate all API paths and add them to the Swagger JSON object
      */
-    _addSwaggerAPIPaths(swagger) {
-      return BbPromise.map(Object.keys(S.state.project.components), (componentName) => {
-        return this._addSwaggerComponent(swagger, S.state.project.components[componentName]);
+    _addSwaggerAPIPaths(project, swagger) {
+      var functions = project.functions;
+      return BbPromise.map(Object.keys(project.functions), (functionName) => {
+        return this._addSwaggerFunction(swagger, functions[functionName]);
       });
     }
 
-    _addSwaggerComponent(swagger, component) {
-      return BbPromise.map(Object.keys(component.functions), (functionName) => {
-        return this._addSwaggerFunction(swagger, component, component.functions[functionName]);
-      });
-    }
-
-    _addSwaggerFunction(swagger, component, sfunction) {
+    _addSwaggerFunction(swagger, sfunction) {
       return BbPromise.map(sfunction.endpoints, (endpoint) => {
-        return this._addSwaggerEndpoint(swagger, component, sfunction, endpoint);
+        return this._addSwaggerEndpoint(swagger, sfunction, endpoint);
       });
     }
 
-    _addSwaggerEndpoint(swagger, component, sfunction, endpoint) {
+    _addSwaggerEndpoint(swagger, sfunction, endpoint) {
       var url = endpoint.path;
       if (url.slice(0, 1) !== '/') {
         url = '/' + url;
