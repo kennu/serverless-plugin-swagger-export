@@ -327,11 +327,15 @@ module.exports = function(S) {
         // Already exists
         return BbPromise.resolve();
       }
-      var models = require(path.join(process.cwd(), swagger.definitions.$sequelizeImport));
-      var model = models[objectName];
+      var models;
+      var model;
+      if (swagger.definitions.$sequelizeImport) {
+        models = require(path.join(process.cwd(), swagger.definitions.$sequelizeImport));
+        model = models[objectName];
+      }
       if (!model) {
         // Model not found, skip it
-        console.error('Skipping undefined object type', objectName);
+        console.error('Warning: Undefined object type', objectName);
         return BbPromise.resolve();
       }
       var def = {
