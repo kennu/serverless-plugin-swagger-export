@@ -54,7 +54,7 @@ like this:
         "title": "Overridden title",
         "description": "Overridden description"
       },
-      "host": "exaple.com"
+      "host": "example.com"
     }
 ```
 
