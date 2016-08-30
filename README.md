@@ -10,20 +10,32 @@ based on your Serverless project structure.
 
 First install the plugin into your Serverless project:
 
+```
     npm install --save serverless-plugin-swagger-export
+```
 
 Then edit your **s-project.json**, locate the plugins: [] section, and add
 the plugin as follows:
 
+```js
     plugins: [
         "serverless-plugin-swagger-export"
     ]
+```
 
 ## Usage
 
 To autogenerate a Swagger JSON API definition, use this command:
 
-    sls swagger export
+```
+    sls swagger export [-b <basePath>]
+```
+
+where supplying `basePath` will set a default basePath tag in Swagger. 
+This is useful if you are using different stages in Serverless, as you can 
+set the stage name as the basePath in your CI/CD tool.  NOTE: You can still 
+set `basePath` inside s-project.json, and this will take precedence over 
+the command line option - see below for customising exported API documentation.
 
 ## Customizing exported API documentation
 
@@ -34,6 +46,7 @@ Swagger JSON.
 In **s-project.json**, you can override top level Swagger JSON elements
 like this:
 
+```
     "name": "MyServerlessProject",
     "version": "1.0.0",
     "swaggerExport": {
@@ -43,12 +56,14 @@ like this:
       },
       "host": "example.com"
     }
+```
 
 Any elements you specify under swaggerExport will replace the defaults.
 
 In **s-function.json**, you can add Swagger documentation to each endpoint
 like this:
 
+```
     "path": "myapi",
     "method": "GET",
     "type": "AWS",
@@ -61,6 +76,22 @@ like this:
       "parameters": [],
       "responses": {}
     }
+```
+
+### Excluding endpoints from Swagger
+
+if you wish an endpoint to be excluded (for instance, OPTIONS endpoints, or functions with no endpoints at all), simply set the only swagger tag as 'exclude':
+```
+    "path": "myapi",
+    "method": "OPTIONS",
+    "type": "AWS",
+    "authorizationType": "none",
+    "apiKeyRequired": true,
+    "swaggerExport": {
+      "exclude": true,
+    }
+```
+
 
 Please see Swagger documentation for more details on all the fields.
 

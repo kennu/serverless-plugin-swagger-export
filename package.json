@@ -1,11 +1,14 @@
 {
   "name": "serverless-plugin-swagger-export",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "engines": {
     "node": ">=4.0"
   },
   "description": "Swagger Export plugin for Serverless",
-  "author": "Kenneth Falck <kennu@iki.fi>",
+  "author": {
+    "name": "Kenneth Falck",
+    "email": "kennu@iki.fi"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -26,5 +29,5 @@
   },
   "dependencies": {
     "bluebird": "^3.0.6"
-  }
+ }
 }

@@ -63,7 +63,11 @@ module.exports = function(S) {
         description:    'Exports a Swagger JSON API definition to standard output',
         context:        'swagger',
         contextAction:  'export',
-        options:        [],
+        options:       [{ 
+          option:      'basePath',
+          shortcut:    'b',
+          description: 'Supplied basePath will be used unless overridden in s-project.json'
+        }],
         parameters:     []
       });
       return BbPromise.resolve();
@@ -72,9 +76,16 @@ module.exports = function(S) {
     /**
      * This function exports the Swagger JSON to stdout
      */
-    _exportSwaggerJSON() {
+    _exportSwaggerJSON(evt) {
+
       // This is the base Swagger JSON
       var project = S.getProject();
+
+      let basePath = '/';
+      if (evt.options.basePath) {
+        basePath += evt.options.basePath;
+      }
+
       var swagger = {
         "swagger": "2.0",
         "info": {
@@ -83,7 +94,7 @@ module.exports = function(S) {
           "description": project.description
         },
         "host": "localhost",
-        "basePath": "/",
+        "basePath": basePath,
         "schemes": ["http"],
         "tags": [],
         "securityDefinitions": {},
