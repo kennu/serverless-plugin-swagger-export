@@ -1,3 +1,10 @@
+# This is an older project for Serverless 0.x
+
+Nowadays you can use Amazon AWS API Gateway's built in Swagger export
+feature instead of a custom plugin:
+
+    aws apigateway get-export --export-type swagger --rest-api-id xxx --stage-name dev myswagger.json
+
 # Swagger Export Plugin for Serverless
 Kenneth Falck <kennu@iki.fi> 2016
 
